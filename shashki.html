@@ -1,0 +1,504 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1251" />
+<title>Шашки</title>
+<style>
+body{
+	margin:0px;
+	padding:50px;
+	background:#EEE;
+	zoom: 0.75;
+	text-align: center;
+}
+</style>
+<link type="text/css" href="stylesheets/smoothness/jquery-ui-1.8.17.custom.css" rel="stylesheet" />
+<script type="text/javascript" src="javascripts/jquery-1.7.1.min.js"></script>
+<script type="text/javascript" src="javascripts/jquery-ui-1.8.17.custom.min.js"></script>
+<script>
+$(function() {
+
+	$.widget("custom.sh", {
+		options: {
+			editor: false
+		},
+		_create: function () {
+		
+			var _root = this.element;
+			
+			var size = 8;
+			
+			_root.disableSelection();
+			_root.css({
+				'display':'table',
+				'position':'relative',
+			})
+			
+			var Unit = function(type,i,j){
+				this.type = type;
+				this.i = i;
+				this.j = j;
+				this.queen = false;
+				this.obj = null
+				this.Draw = function(){
+					var _self = this;
+					_self.obj = $("<div>")
+					.attr('align','center')
+					.css({
+						'z-index':1000,
+						'position':'absolute',
+						'top': game.mydesk.cells[i][j].position().top+'px',
+						'left': game.mydesk.cells[i][j].position().left+'px',
+						'height': '50px',
+						'width': '50px',
+						'line-height': '37px',
+						'font-size': '11px',
+						'font-family':'MS Trebuchet',
+						'font-weight':'bold',
+						'background': 'url(sh.png)',
+						'background-repeat':'no-repeat',
+						'margin':'10px',
+					}).appendTo(_root)
+					//_self.AddHandlers()
+					_self.Default();
+				}
+				this.AddHandlers = function(){
+					var _self = this;
+					_self.obj
+						.attr('actindex','0')
+						.css({'cursor':'pointer'})
+						.mousedown(function(){
+							_self.Activate();
+							game.mydesk.Default()
+							game.mydesk.Activate()
+						})
+						/*
+						.blur(function(){
+							_self.Default();
+							game.mydesk.Default();
+						})*/
+						.text('=)').text('=[]').text('=|')
+				}
+				this.RemoveHandlers = function(){
+					var _self = this;
+					_self.obj
+						.removeAttr('actindex')
+						.css({'cursor':'default'})
+						//.unbind('focus')
+						//.unbind('blur')
+						.unbind('mousedown')
+						.text('')
+				}
+				this.Activate = function(){
+					var _self = this;
+					if (game.mydesk.curr) game.mydesk.curr.Default()
+					game.mydesk.curr = this;
+					this.obj.css({
+						'background-position':-200-(_self.queen?50:0)+'px 0px',
+						'color': '#FFF',
+					})
+				}
+				this.Default = function(){
+					var _self = this;
+					_self.obj.css({
+						'background-position':(_self.type-1)*(50)-(_self.queen?50:0)+'px 0px',
+						'color': (_self.type==1)?'#000':'#FFF',
+					})
+				
+				}
+				this.Kill = function(){
+					var _self = this
+					var i = _self.i
+					var j = _self.j
+					_self.obj.css({'z-index':999})
+					.fadeTo(100,0,function(){$(this).hide()});
+					game.mydesk.units[i][j] = null;
+					game.mydesk.loc[i][j] = 0;
+					
+				}
+				this.Draw();
+			}
+			
+			var Desk = function(){
+				this.size = 8;
+				this.loc = [	[0,-1,0,-1,0,-1,0,-1],
+								[-1,0,-1,0,-1,0,-1,0],
+								[0,-1,0,-1,0,-1,0,-1],
+								[0,0,0,0,0,0,0,0],
+								[0,0,0,0,0,0,0,0],
+								[1,0,1,0,1,0,1,0],
+								[0,1,0,1,0,1,0,1],
+								[1,0,1,0,1,0,1,0],	];
+								
+				/*
+				this.loc = [	[0,0,0,0,0,-1,0,-1],
+								[1,0,0,0,-1,0,-1,0],
+								[0,0,0,0,0,-1,0,-1],
+								[0,0,0,0,0,0,0,0],
+								[0,0,0,0,0,0,0,0],
+								[1,0,1,0,0,0,0,0],
+								[0,1,0,1,0,0,0,0],
+								[1,0,1,0,0,0,0,0],	];
+				*/
+				this.first = true;
+				this.cnt = 0;
+				this.units = [];
+				this.curr = null;
+				this.Draw = function(){
+					_self = this;
+					var table = $("<table>",{
+						cellpadding: 0,
+						cellspacing: 0,
+						border: 0,
+						align: 'center'
+					})
+					.css({
+						'border':'solid 5px #333',
+						'border-radius':'5px'
+					})
+					.appendTo(_root);
+					
+					var cells = []
+					
+					for(var i=0; i<_self.size; ++i){
+						var tr = $("<tr>").appendTo(table);
+						cells[i] = []
+						for(var j=0; j<_self.size; ++j){
+							cells[i][j] = $("<td>",{
+								id: "tr"+i+"td"+j,
+								width:70,
+								height:70,
+								bgColor:((j+i)%2)?"#AAA":"#CCC"
+							})
+							.appendTo(tr);
+						}
+					}
+					this.obj = table;
+					this.cells = cells;
+				}
+				this.Default = function(){
+					this.obj.find("td")
+					.attr('step','0')
+					.css({
+						'background':'',
+						'cursor':'default'
+					}).unbind('mousedown')
+				}
+				
+					
+				this.findDeathPath = function(posi,posj){
+						var _self = this;
+						var steps = [];
+						if(!_self.units[posi][posj].queen){
+							for(var i=posi-1; i<=posi+1; ++i){
+								for(var j=posj-1; j<=posj+1; ++j){
+									if(i>=_self.size-1 || i<1 || j>=_self.size-1 || j<1) continue
+									if(_self.units[i][j]==null) continue
+									var di = posi - i;
+									var dj = posj - j;
+									if((_self.units[i][j].type==-_self.units[posi][posj].type)
+									&& (_self.units[i-di][j-dj]==null) && ((i!=posi) && (j!=posj))){
+
+										(function(i,j,di,dj){
+											steps.push([i-di,j-dj])
+											
+											_self.cells[i-di][j-dj]
+											.bind('mousedown',function(){
+												//дамка из дамки
+												if(_self.units[i][j].queen==true){
+													_self.units[posi][posj].queen = true
+													_self.units[posi][posj].Default()
+												}
+												//удаление битой фишки
+												_self.units[i][j].Kill();
+											})
+										})(i,j,di,dj)
+									}
+								}
+							}
+						}
+						else if(_self.units[posi][posj].queen){
+							var lt = true, rt = true, lb = true, rb = true
+							var Check = function(pi,pj,fl){
+								if((posi+pi<7 && posj+pj<7 && posi+pi>=1 && posj+pj>=1) && fl){
+									if (_self.units[posi+pi][posj+pj]==null){
+										fl = true
+									} else if (_self.units[posi+pi][posj+pj].type==-_self.units[posi][posj].type){
+										var di = posi+pi+(pi/Math.abs(pi));
+										var dj = posj+pj+(pj/Math.abs(pj));
+										if(_self.units[di][dj] == null){
+											steps.push([di,dj])
+											
+											_self.cells[di][dj]
+											.bind('mousedown',function(){
+												//удаление битой фишки
+												_self.units[posi+pi][posj+pj].Kill();
+											})
+											
+										}
+										fl = false
+									} else fl = false
+								} else fl = false 
+								
+								return fl
+							}
+							var n = 1;
+							while((lt || rt || lb || rb)){
+								rb = Check(n,n,rb)
+								lt = Check(-n,-n,lt)
+								rt = Check(-n,n,rt)
+								lb = Check(n,-n,lb)
+								n++
+							}
+						
+						}
+						
+						return steps;
+				}
+				this.findFriendPath = function(posi,posj){
+						var _self = this
+						var steps = []
+						var curr_type = _self.units[posi][posj].type
+						var from = posi-curr_type;
+						var to = posi-curr_type;
+						
+						if(!_self.units[posi][posj].queen){
+							for(var i=from; i<=to; i++){
+								for(var j=posj-1; j<=posj+1; ++j){
+									if(i>=_self.size || i<0 || j>=_self.size || j<0) continue
+									if((this.units[i][j]==null) && ((i!=posi) && (j!=posj))){
+										steps.push([i,j])
+									}
+								}
+							}
+						}
+						else if(_self.units[posi][posj].queen){
+						
+							var lt = true, rt = true, lb = true, rb = true
+							var Check = function(pi,pj,fl){
+								if((posi+pi<8 && posj+pj<8 && posi+pi>=0 && posj+pj>=0) && _self.units[posi+pi][posj+pj]==null && fl){
+									fl = true
+									steps.push([posi+pi,posj+pj])
+								} else fl = false 
+								return fl
+							}
+							var n = 1;
+							while((lt || rt || lb || rb)){
+								rb = Check(n,n,rb)
+								lt = Check(-n,-n,lt)
+								rt = Check(-n,n,rt)
+								lb = Check(n,-n,lb)
+								n++
+							}
+						}
+						return steps;
+				}
+				this.Activate = function(){
+					var _self = this;
+					var deathSteps = this.findDeathPath(_self.curr.i,_self.curr.j);
+					_self.LightPath(deathSteps, true)
+					if(deathSteps.length == 0){
+						var friendSteps = this.findFriendPath(_self.curr.i,_self.curr.j);
+						_self.LightPath(friendSteps, false)
+					}
+				}
+				this.LightPath = function(steps,step_type){
+					var _self = this;
+					for(var k=0; k<steps.length; ++k){
+						(function(){
+							var i = steps[k][0]
+							var j = steps[k][1]
+							_self.cells[i][j]
+							.css({
+								'background': step_type?'#faa':'#aaf',
+								'cursor':'pointer'
+							})
+							.attr('step','1')
+							.bind('mousedown',function(){
+								game.StepToggle(0)
+								_self.curr.obj
+								.animate(_self.cells[i][j].position(), 'fast', function(){
+									if((_self.curr.type==1 && i==0)
+									|| (_self.curr.type==-1 && i==_self.size-1)){
+										_self.curr.queen = true
+										_self.curr.Default()
+									}
+									if(step_type){
+										var steps = _self.findDeathPath(_self.curr.i,_self.curr.j);
+										_self.LightPath(steps, true)
+										if(steps.length!=0){
+											_self.curr.Activate()
+											game.SimulateRepeatStep()
+										}else{
+											game.StepToggle(-_self.curr.type);
+											game.cnt++;
+											game.SimulateBeginStep()
+										}
+										
+									}
+									else{
+										game.StepToggle(-_self.curr.type);
+										game.cnt++;
+										game.SimulateBeginStep()
+									}
+								})
+								_self.curr.Default()
+								_self.Default();
+								//-----------------------------------------------//
+								_self.loc[_self.curr.i][_self.curr.j] = 0;
+								_self.loc[i][j] = _self.curr.type;
+								_self.units[i][j] = _self.curr;
+								_self.units[_self.curr.i][_self.curr.j] = null;
+								_self.curr.i = i;
+								_self.curr.j = j;
+								//-----------------------------------------------//
+								
+							})
+						})()
+					}
+				}
+				this.Draw();
+				this.FillDesk = function(){
+					_self = this;
+					for(var i=0; i<_self.size; ++i){
+						this.units[i] = [];
+						for(var j=0; j<_self.size; ++j){
+							this.units[i][j] = null;
+							if (this.loc[i][j]==1 || this.loc[i][j]==-1)
+							this.units[i][j] = new Unit(this.loc[i][j],i,j)
+						}
+					}
+				}
+			}
+			
+			var Game = function(){
+				this.cnt = 0;
+				this.delay = 200;
+				this.mode = 0;
+				this.first = true;
+				this.mydesk = null;
+				this.SimulateBeginStep = function(){
+					var _self = this;
+					if(_self.Mode()) return
+					setTimeout(function(){
+					var objects = _root.find("div[actindex=0]")
+					objects.eq(Math.round(Math.random()*objects.length)-1).mousedown()
+					_self.SimulateRepeatStep()
+					},200)
+					
+				}
+				this.SimulateRepeatStep = function(){
+					var _self = this;
+					if(_self.Mode()) return
+					var cells = _root.find("td[step=1]")
+					cells.eq(Math.round(Math.random()*cells.length)-1).mousedown()
+				}
+				this.Mode = function(){
+					var _self = this;
+					if(_self.cnt%game.mode==0) return _self.first
+					return !_self.first
+				}
+				this.StepToggle = function(type){
+					var _self = this;
+					var killers = [];
+					
+					for(var i=0; i<_self.mydesk.size; ++i){
+						for(var j=0; j<_self.mydesk.size; ++j){
+							if(_self.mydesk.units[i][j]==null) continue
+							if(_self.mydesk.units[i][j].type==type){
+								if(_self.mydesk.findDeathPath(i,j).length>0){
+									killers.push([i,j])
+								}
+							}
+						}
+					}
+					for(var i=0; i<_self.mydesk.size; ++i){
+						for(var j=0; j<_self.mydesk.size; ++j){
+							if(_self.mydesk.units[i][j]==null) continue
+							_self.mydesk.units[i][j].RemoveHandlers()
+							var flag = false;
+							for(var k=0; k<killers.length; ++k)
+								if(killers[k][0]==i && killers[k][1]==j) flag= true;
+							if(_self.mydesk.units[i][j].type==type){
+								if(((killers.length==0 && _self.mydesk.findFriendPath(i,j).length!=0) || flag==true))
+									_self.mydesk.units[i][j].AddHandlers()
+							}
+						}
+					}
+				}
+				this.Start = function(){
+					var _self = this;
+					
+					_self.StepToggle(1);
+					_self.SimulateBeginStep()
+				}
+			}
+			
+			var game = new Game();
+			//game.Start();
+			game.mydesk = new Desk();
+			game.mydesk.FillDesk();
+			
+			
+			var buttons = $("<div>")
+			.css({
+				'padding':'20px'
+			})
+			.appendTo(_root)
+			
+			$("<button>",{
+				text: "комп-комп"
+			}).button()
+			.appendTo(buttons)
+			.click(function(){
+				buttons.hide();
+				game.mode = 0;
+				game.Start();
+			})
+			
+			$("<button>",{
+				text: "чел-комп"
+			}).button()
+			.appendTo(buttons)
+			.click(function(){
+				buttons.hide();
+				game.mode = 2;
+				game.Start();
+			})
+			
+			$("<button>",{
+				text: "комп-чел"
+			}).button()
+			.appendTo(buttons)
+			.click(function(){
+				buttons.hide();
+				game.first = false;
+				game.mode = 2;
+				game.Start();
+			})
+			
+			$("<button>",{
+				text: "чел-чел"
+			}).button()
+			.appendTo(buttons)
+			.click(function(){
+				buttons.hide();
+				game.mode = 1;
+				game.Start();
+			})
+
+		}
+	})
+	
+	$("#shashki").sh()
+	
+	
+})
+</script>
+</head>
+<body>
+<div align="center">
+<div id="shashki"></div>
+</div>
+</body>
+</html>
