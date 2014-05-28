@@ -1,8 +1,8 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=windows-1251" />
-<title>Шашки</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf8" />
+<title>РЁР°С€РєРё</title>
 <style>
 body{
 	margin:0px;
@@ -204,12 +204,12 @@ $(function() {
 											
 											_self.cells[i-di][j-dj]
 											.bind('mousedown',function(){
-												//дамка из дамки
+												//
 												if(_self.units[i][j].queen==true){
 													_self.units[posi][posj].queen = true
 													_self.units[posi][posj].Default()
 												}
-												//удаление битой фишки
+												//
 												_self.units[i][j].Kill();
 											})
 										})(i,j,di,dj)
@@ -231,7 +231,7 @@ $(function() {
 											
 											_self.cells[di][dj]
 											.bind('mousedown',function(){
-												//удаление битой фишки
+												//
 												_self.units[posi+pi][posj+pj].Kill();
 											})
 											
@@ -447,7 +447,7 @@ $(function() {
 			.appendTo(_root)
 			
 			$("<button>",{
-				text: "комп-комп"
+				text: "РєРѕРјРї-РєРѕРјРї"
 			}).button()
 			.appendTo(buttons)
 			.click(function(){
@@ -457,7 +457,7 @@ $(function() {
 			})
 			
 			$("<button>",{
-				text: "чел-комп"
+				text: "С‡РµР»-РєРѕРјРї"
 			}).button()
 			.appendTo(buttons)
 			.click(function(){
@@ -467,7 +467,7 @@ $(function() {
 			})
 			
 			$("<button>",{
-				text: "комп-чел"
+				text: "РєРѕРјРї-С‡РµР»"
 			}).button()
 			.appendTo(buttons)
 			.click(function(){
@@ -478,7 +478,7 @@ $(function() {
 			})
 			
 			$("<button>",{
-				text: "чел-чел"
+				text: "С‡РµР»-С‡РµР»"
 			}).button()
 			.appendTo(buttons)
 			.click(function(){
